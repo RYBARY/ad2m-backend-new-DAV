@@ -11,14 +11,13 @@ const auth = useAuthStore()
 const normRole = (v) =>
   String(v ?? '')
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')   // enlève accents
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim()
-    .replace(/[\s-]+/g, '_')           // espaces/tirets => _
+    .replace(/[\s-]+/g, '_')
     .replace(/_+/g, '_')
 
 const roleNames = computed(() => {
-  // supporte roles = ["raf"] ou roles=[{name:"RAF"}]
   const roles = auth.user?.roles ?? []
   return roles
     .map(r => (typeof r === 'string' ? r : r?.name))
@@ -31,13 +30,16 @@ const hasRole = (...names) => {
   return names.some(n => set.has(normRole(n)))
 }
 
+// ✅ ADMIN STRICT : s'il est admin => il ne voit que la vue admin
+const isAdmin = computed(() => hasRole('administrateur', 'admin'))
+
+// ⚠️ IMPORTANT: admin ne doit PAS voir validation/accp
 const canSeeValidation = computed(() =>
-  hasRole('administrateur', 'admin', 'chef_hierarchique', 'raf', 'coordonnateur_de_projet', )
+  !isAdmin.value && hasRole('chef_hierarchique', 'raf', 'coordonnateur_de_projet')
 )
 const canSeeAccp = computed(() =>
-  hasRole('accp', 'admin', 'administrateur')
+  !isAdmin.value && hasRole('accp')
 )
-
 
 const isActive = (...names) =>
   names.some(n => route.name === n || String(route.name || '').startsWith(n + '.'))
@@ -69,58 +71,70 @@ const logout = async () => {
 
           <!-- Center nav -->
           <nav class="flex items-center gap-2">
-            <router-link
-              :to="{ name: 'dashboard' }"
-              class="px-3 py-2 rounded-lg text-sm flex items-center gap-2"
-              :class="isActive('dashboard') ? 'bg-brand-50 text-brand' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-            >
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 13h7V4H4v9Zm9 7h7V11h-7v9ZM4 20h7v-5H4v5Zm9-18v7h7V2h-7Z"/>
-              </svg>
-              Tableau de bord
-            </router-link>
+            <!-- ✅ ADMIN : uniquement administration -->
+            <template v-if="isAdmin">
+              <router-link
+                :to="{ name: 'admin' }"
+                class="px-3 py-2 rounded-lg text-sm flex items-center gap-2"
+                :class="isActive('admin') ? 'bg-brand-50 text-brand' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+              >
+                ⚙️ Administration
+              </router-link>
+            </template>
 
-            <router-link
-              :to="{ name: 'missions' }"
-              class="px-3 py-2 rounded-lg text-sm flex items-center gap-2"
-              :class="isActive('missions') ? 'bg-brand-50 text-brand' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-            >
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
-              </svg>
-              Missions
-            </router-link>
+            <!-- ✅ Utilisateurs normaux : menu normal -->
+            <template v-else>
+              <router-link
+                :to="{ name: 'dashboard' }"
+                class="px-3 py-2 rounded-lg text-sm flex items-center gap-2"
+                :class="isActive('dashboard') ? 'bg-brand-50 text-brand' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+              >
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 13h7V4H4v9Zm9 7h7V11h-7v9ZM4 20h7v-5H4v5Zm9-18v7h7V2h-7Z"/>
+                </svg>
+                Tableau de bord
+              </router-link>
 
-            <!-- ✅ Validation visible seulement si rôle validateur -->
-            <router-link
-              v-if="canSeeValidation"
-              :to="{ name: 'validation' }"
-              class="px-3 py-2 rounded-lg text-sm flex items-center gap-2"
-              :class="isActive('validation') ? 'bg-brand-50 text-brand' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-            >
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 11l3 3L22 4"/>
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-              </svg>
-              Validation
-            </router-link>
+              <router-link
+                :to="{ name: 'missions' }"
+                class="px-3 py-2 rounded-lg text-sm flex items-center gap-2"
+                :class="isActive('missions') ? 'bg-brand-50 text-brand' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+              >
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
+                </svg>
+                Missions
+              </router-link>
 
-            <router-link
-              v-if="canSeeAccp"
-              :to="{ name: 'accp' }"
-              class="px-3 py-2 rounded-lg text-sm flex items-center gap-2"
-              :class="isActive('accp') ? 'bg-brand-50 text-brand' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-            >
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 1v22"/>
-                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H15a3.5 3.5 0 0 1 0 7H6"/>
-              </svg>
-              Suivi ACCP
-            </router-link>
+              <router-link
+                v-if="canSeeValidation"
+                :to="{ name: 'validation' }"
+                class="px-3 py-2 rounded-lg text-sm flex items-center gap-2"
+                :class="isActive('validation') ? 'bg-brand-50 text-brand' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+              >
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 11l3 3L22 4"/>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+                Validation
+              </router-link>
+
+              <router-link
+                v-if="canSeeAccp"
+                :to="{ name: 'accp' }"
+                class="px-3 py-2 rounded-lg text-sm flex items-center gap-2"
+                :class="isActive('accp') ? 'bg-brand-50 text-brand' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+              >
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 1v22"/>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H15a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                Suivi ACCP
+              </router-link>
+            </template>
           </nav>
 
           <!-- Right user -->
-           
           <div class="flex items-center gap-3">
             <div v-if="auth.user" class="flex items-center gap-2">
               <div class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center">
