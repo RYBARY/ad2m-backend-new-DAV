@@ -4,91 +4,180 @@ namespace Database\Seeders;
 
 use App\Models\Mission;
 use App\Models\User;
+use App\Models\Avance;
+use App\Models\Activity;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Carbon;
 
 class MissionSeeder extends Seeder
 {
     public function run(): void
     {
-        $raf = User::where('email', 'raf@example.com')->first();
-        $cp  = User::where('email', 'cp@example.com')->first();
+        // ✅ Récupération des acteurs (matricules venant de ton UserSeeder)
+        $raf  = User::where('matricule', 'RAF-001')->firstOrFail();
+        $cp   = User::where('matricule', 'CP-001')->firstOrFail();
+        $accp = User::where('matricule', 'ACCP-001')->firstOrFail();
 
-        $missionnaires = User::whereHas('roles', fn($q) => $q->where('name', 'missionnaire'))->get();
-        if ($missionnaires->isEmpty()) return;
+        // ✅ Missionnaires (via rôle)
+        $missionnaires = User::whereHas('roles', function ($q) {
+            $q->where('name', 'missionnaire');
+        })->orderBy('id')->get();
 
-        $hasChefColumn = Schema::hasColumn('missions', 'chef_hierarchique_id');
+        if ($missionnaires->isEmpty()) {
+            throw new \RuntimeException("Aucun missionnaire trouvé. Lance d'abord UserSeeder.");
+        }
 
-        $destinations = ['Morondava','Toliara','Toamasina','Antsirabe','Mahajanga'];
-        $moves        = ['4x4','Bus','Avion','Moto'];
+        $today = Carbon::today();
 
-        $i = 0;
-        foreach ($missionnaires as $u) {
-            $i++;
-            $chefId = $u->chef_hierarchique_id; // CH du missionnaire
+        // ✅ Paramètres par statut (dates cohérentes)
+        $plan = [
+            'brouillon'      => ['start' => 14,  'duration' => 2],
+            'en_attente_ch'  => ['start' => 10,  'duration' => 2],
+            'valide_ch'      => ['start' => 8,   'duration' => 2],
+            'valide_raf'     => ['start' => 6,   'duration' => 2],
+            'valide_cp'      => ['start' => 4,   'duration' => 2],
+            'avance_payee'   => ['start' => 2,   'duration' => 3],
+            'en_cours'       => ['start' => 0,   'duration' => 5],
+            'cloturee'       => ['start' => -10, 'duration' => 3],
+        ];
 
-            // A) Brouillon
-            Mission::updateOrCreate(
-                ['demandeur_id' => $u->id, 'objet' => "Brouillon #{$u->matricule}"],
-                [
-                    'demandeur_id' => $u->id,
-                    'objet' => "Brouillon #{$u->matricule}",
-                    'destination' => $destinations[$i % count($destinations)],
-                    'moyen_deplacement' => $moves[$i % count($moves)],
-                    'motif' => "Mission brouillon de {$u->name}",
-                    'date_debut' => now()->addDays($i)->toDateString(),
-                    'date_fin' => now()->addDays($i + 2)->toDateString(),
-                    'montant_avance_demande' => 150000 + ($i * 5000),
-                    'statut_actuel' => 'brouillon',
-                ]
-            );
+        $destinations = ['Morondava', 'Mahajanga', 'Antsirabe', 'Toliara', 'Tamatave', 'Fianarantsoa', 'Ambositra', 'Antananarivo'];
+        $moyens = ['4x4', 'Taxi-brousse', 'Avion', 'Moto', 'Bateau'];
 
-            // B) Soumise -> en_attente_ch (doit être visible uniquement par SON CH)
-            $submitted = [
-                'demandeur_id' => $u->id,
-                'objet' => "Soumise #{$u->matricule}",
-                'destination' => $destinations[($i + 1) % count($destinations)],
-                'moyen_deplacement' => $moves[($i + 1) % count($moves)],
-                'motif' => "Mission soumise de {$u->name}",
-                'date_debut' => now()->addDays($i + 3)->toDateString(),
-                'date_fin' => now()->addDays($i + 5)->toDateString(),
-                'montant_avance_demande' => 180000 + ($i * 6000),
-                'statut_actuel' => 'en_attente_ch',
-                'validation_ch_id' => null,
-                'validation_raf_id' => null,
-                'validation_cp_id' => null,
-            ];
-            if ($hasChefColumn) {
-                $submitted['chef_hierarchique_id'] = $chefId; // <-- clé du fix
+        $perStatus = 2; // ✅ "à chaque statut il y en a" => 2 missions par statut
+        $globalIndex = 0;
+
+        foreach ($plan as $status => $cfg) {
+            for ($k = 1; $k <= $perStatus; $k++) {
+                $demandeur = $missionnaires[$globalIndex % $missionnaires->count()];
+
+                // CH = chef du missionnaire (si jamais null, fallback sur CH-001)
+                $fallbackCH = User::where('matricule', 'CH-001')->first();
+                $chId = $demandeur->chef_hierarchique_id ?: ($fallbackCH?->id);
+
+                $start = $today->copy()->addDays($cfg['start']);
+                $end   = $start->copy()->addDays($cfg['duration']);
+
+                $montant = 150000 + ($globalIndex * 25000); // montants variés
+
+                $keyObjet = "SEED - {$status} - " . str_pad((string)(($globalIndex % 99) + 1), 2, '0', STR_PAD_LEFT);
+
+                // ✅ Base mission
+                $data = [
+                    'demandeur_id'            => $demandeur->id,
+                    'validation_ch_id'        => null,
+                    'validation_raf_id'       => null,
+                    'validation_cp_id'        => null,
+
+                    'objet'                   => $keyObjet,
+                    'destination'             => $destinations[$globalIndex % count($destinations)],
+                    'moyen_deplacement'       => $moyens[$globalIndex % count($moyens)],
+                    'date_debut'              => $start->toDateString(),
+                    'date_fin'                => $end->toDateString(),
+
+                    'montant_avance_demande'  => $montant,
+                    'montant_total_justifie'  => null,
+                    'reliquat_a_rembourser'   => null,
+
+                    'statut_actuel'           => $status,
+                    'date_echeance_audit'     => $end->copy()->addDays(7),
+                    'date_regularisation'     => null,
+                ];
+
+                // ✅ Remplissage des validateurs selon statut
+                if (in_array($status, ['valide_ch','valide_raf','valide_cp','avance_payee','en_cours','cloturee'], true)) {
+                    $data['validation_ch_id'] = $chId;
+                }
+                if (in_array($status, ['valide_raf','valide_cp','avance_payee','en_cours','cloturee'], true)) {
+                    $data['validation_raf_id'] = $raf->id;
+                }
+                if (in_array($status, ['valide_cp','avance_payee','en_cours','cloturee'], true)) {
+                    $data['validation_cp_id'] = $cp->id;
+                }
+
+                // ✅ Clôture: on met des valeurs financières cohérentes
+                if ($status === 'cloturee') {
+                    $totalJustifie = $montant - 20000; // ex: il reste 20k à rembourser
+                    $data['montant_total_justifie'] = $totalJustifie;
+                    $data['reliquat_a_rembourser'] = max(0, $montant - $totalJustifie);
+                    $data['date_regularisation'] = now();
+                }
+
+                // ✅ Upsert mission (évite doublons si tu relances les seeders)
+                $mission = Mission::updateOrCreate(
+                    ['objet' => $keyObjet],
+                    $data
+                );
+
+                // ✅ Si avance_payee / en_cours / cloturee => créer un paiement d'avance
+                if (in_array($status, ['avance_payee','en_cours','cloturee'], true)) {
+                    Avance::updateOrCreate(
+                        [
+                            'mission_id'      => $mission->id,
+                            'type_operation'  => 'paiement',
+                        ],
+                        [
+                            'executed_by_id'       => $accp->id,
+                            'montant'              => $montant,
+                            'date_operation'       => now(),
+                            'numero_piece_paiement'=> "SEED-PAY-" . str_pad((string)$mission->id, 4, '0', STR_PAD_LEFT),
+                        ]
+                    );
+                }
+
+                // ✅ (Optionnel mais utile) petite traçabilité Activity
+                $this->seedActivities($mission, $demandeur->id, $chId, $raf->id, $cp->id, $accp->id);
+
+                $globalIndex++;
             }
+        }
+    }
 
-            Mission::updateOrCreate(
-                ['demandeur_id' => $u->id, 'objet' => $submitted['objet']],
-                $submitted
+    private function seedActivities(Mission $mission, int $demandeurId, ?int $chId, int $rafId, int $cpId, int $accpId): void
+    {
+        // On met juste ce qui correspond au statut actuel (simple et lisible)
+        $status = $mission->statut_actuel;
+
+        // soumission si pas brouillon
+        if ($status !== 'brouillon') {
+            Activity::firstOrCreate(
+                ['mission_id' => $mission->id, 'action_type' => 'soumission', 'performed_by_id' => $demandeurId],
+                ['description' => "Soumission de la mission ({$status})."]
             );
+        }
 
-            // C) Avance payée (déjà validée CH/RAF/CP)
-            $paid = [
-                'demandeur_id' => $u->id,
-                'objet' => "Payée #{$u->matricule}",
-                'destination' => $destinations[($i + 2) % count($destinations)],
-                'moyen_deplacement' => $moves[($i + 2) % count($moves)],
-                'motif' => "Mission payée de {$u->name}",
-                'date_debut' => now()->subDays(10)->toDateString(),
-                'date_fin' => now()->subDays(8)->toDateString(),
-                'montant_avance_demande' => 220000 + ($i * 7000),
-                'statut_actuel' => 'avance_payee',
-                'validation_ch_id' => $chefId,
-                'validation_raf_id' => $raf?->id,
-                'validation_cp_id' => $cp?->id,
-            ];
-            if ($hasChefColumn) {
-                $paid['chef_hierarchique_id'] = $chefId;
-            }
+        if (in_array($status, ['valide_ch','valide_raf','valide_cp','avance_payee','en_cours','cloturee'], true) && $chId) {
+            Activity::firstOrCreate(
+                ['mission_id' => $mission->id, 'action_type' => 'validation_ch', 'performed_by_id' => $chId],
+                ['description' => "Validation CH enregistrée."]
+            );
+        }
 
-            Mission::updateOrCreate(
-                ['demandeur_id' => $u->id, 'objet' => $paid['objet']],
-                $paid
+        if (in_array($status, ['valide_raf','valide_cp','avance_payee','en_cours','cloturee'], true)) {
+            Activity::firstOrCreate(
+                ['mission_id' => $mission->id, 'action_type' => 'validation_raf', 'performed_by_id' => $rafId],
+                ['description' => "Validation RAF enregistrée."]
+            );
+        }
+
+        if (in_array($status, ['valide_cp','avance_payee','en_cours','cloturee'], true)) {
+            Activity::firstOrCreate(
+                ['mission_id' => $mission->id, 'action_type' => 'validation_cp', 'performed_by_id' => $cpId],
+                ['description' => "Validation CP enregistrée."]
+            );
+        }
+
+        if (in_array($status, ['avance_payee','en_cours','cloturee'], true)) {
+            Activity::firstOrCreate(
+                ['mission_id' => $mission->id, 'action_type' => 'paiement_avance', 'performed_by_id' => $accpId],
+                ['description' => "Paiement d'avance enregistré (seed)."]
+            );
+        }
+
+        if ($status === 'cloturee') {
+            Activity::firstOrCreate(
+                ['mission_id' => $mission->id, 'action_type' => 'cloture', 'performed_by_id' => $accpId],
+                ['description' => "Mission clôturée (seed)."]
             );
         }
     }

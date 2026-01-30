@@ -11,6 +11,9 @@ class UserSeeder extends Seeder
 {
     private function upsertUser(array $data, array $roleNames): User
     {
+        // ✅ Mot de passe UNIQUE pour tous
+        $plain = 'password';
+
         $user = User::updateOrCreate(
             ['email' => $data['email']],
             [
@@ -22,13 +25,13 @@ class UserSeeder extends Seeder
                 'poste'                => $data['poste'] ?? null,
                 'chef_hierarchique_id' => $data['chef_hierarchique_id'] ?? null,
                 'status'               => $data['status'] ?? 'active',
-                'password'             => Hash::make($data['password'] ?? 'password'),
+
+                // ✅ FORCÉ: "password" pour tout le monde
+                'password'             => Hash::make($plain),
             ]
         );
 
         $roleIds = Role::whereIn('name', $roleNames)->pluck('id')->all();
-
-        // pivot a timestamps, mais nullable => OK même sans withTimestamps()
         $user->roles()->sync($roleIds);
 
         return $user;
@@ -36,106 +39,121 @@ class UserSeeder extends Seeder
 
     public function run(): void
     {
-        $pwd = 'password';
-
-        // ✅ ADMIN (seul vrai “super user”)
+        // ✅ ADMIN
         $admin = $this->upsertUser([
             'matricule' => 'AD2M-ADMIN',
             'nom'       => 'Administrateur',
             'name'      => 'Admin AD2M',
             'email'     => 'admin@ad2m.com',
-            'telephone' => '0340000000',
+            'telephone' => null,
             'unite'     => 'Direction',
             'poste'     => 'Administrateur',
-            'password'  => $pwd,
             'chef_hierarchique_id' => null,
         ], ['administrateur','admin']);
 
-        // ✅ 2 CH (pas de chef)
+        /**
+         * ✅ 3 CH (vrais noms)
+         */
         $ch1 = $this->upsertUser([
             'matricule' => 'CH-001',
-            'nom'       => 'Chef',
-            'name'      => 'CH Nord',
-            'email'     => 'ch1@ad2m.com',
-            'telephone' => '0340000010',
-            'unite'     => 'Opérations',
-            'poste'     => "Chef Hiérarchique",
-            'password'  => $pwd,
+            'nom'       => 'RAZAFIMAHEFA',
+            'name'      => 'RAZAFIMAHEFA Claudio',
+            'email'     => 'razafimahefa.claudio@ad2m.local',
+            'telephone' => null,
+            'unite'     => 'UGP',
+            'poste'     => 'AF',
             'chef_hierarchique_id' => null,
         ], ['chef_hierarchique']);
 
         $ch2 = $this->upsertUser([
             'matricule' => 'CH-002',
-            'nom'       => 'Chef',
-            'name'      => 'CH Sud',
-            'email'     => 'ch2@ad2m.com',
-            'telephone' => '0340000011',
-            'unite'     => 'Opérations',
-            'poste'     => "Chef Hiérarchique",
-            'password'  => $pwd,
+            'nom'       => 'ANDRIANATONADRO',
+            'name'      => 'ANDRIANATONADRO Jean Maximnin',
+            'email'     => 'andrianatonadro.jean.maximnin@ad2m.local',
+            'telephone' => null,
+            'unite'     => 'UGP',
+            'poste'     => 'CAOP SF',
             'chef_hierarchique_id' => null,
         ], ['chef_hierarchique']);
 
-        // ✅ RAF / CP / ACCP (pas de chef, règle simple)
+        $ch3 = $this->upsertUser([
+            'matricule' => 'CH-003',
+            'nom'       => 'RAFAMANTANANTSOA',
+            'name'      => 'RAFAMANTANANTSOA Romuald',
+            'email'     => 'rafamantanantsoa.romuald@ad2m.local',
+            'telephone' => null,
+            'unite'     => 'UGP',
+            'poste'     => 'APM',
+            'chef_hierarchique_id' => null,
+        ], ['chef_hierarchique']);
+
+        // ✅ RAF
         $raf = $this->upsertUser([
             'matricule' => 'RAF-001',
-            'nom'       => 'Responsable',
-            'name'      => 'RAF Finance',
-            'email'     => 'raf@ad2m.com',
-            'telephone' => '0340000003',
-            'unite'     => 'Finance',
+            'nom'       => 'HAINGONOMENJANAHARY',
+            'name'      => 'HAINGONOMENJANAHARY Eliarisoa',
+            'email'     => 'haingonomenjanahary.eliarisoa@ad2m.local',
+            'telephone' => null,
+            'unite'     => 'Administration et Finances',
             'poste'     => 'RAF',
-            'password'  => $pwd,
             'chef_hierarchique_id' => null,
         ], ['raf']);
 
+        // ✅ CP
         $cp = $this->upsertUser([
             'matricule' => 'CP-001',
-            'nom'       => 'Coordonnateur',
-            'name'      => 'Coordonnateur Projet',
-            'email'     => 'cp@ad2m.com',
-            'telephone' => '0340000004',
-            'unite'     => 'Projet',
+            'nom'       => 'RAFIDINARIVO',
+            'name'      => 'RAFIDINARIVO Haja Joel',
+            'email'     => 'rafidinarivo.haja.joel@ad2m.local',
+            'telephone' => null,
+            'unite'     => 'UGP',
             'poste'     => 'CP',
-            'password'  => $pwd,
             'chef_hierarchique_id' => null,
         ], ['coordonnateur_de_projet']);
 
+        // ✅ ACCP
         $accp = $this->upsertUser([
             'matricule' => 'ACCP-001',
-            'nom'       => 'Agent',
-            'name'      => 'ACCP Paiement',
-            'email'     => 'accp@ad2m.com',
-            'telephone' => '0340000005',
-            'unite'     => 'Compta',
+            'nom'       => 'RANDRIANINDRINA',
+            'name'      => 'RANDRIANINDRINA Henintsoa Tahiriniaina',
+            'email'     => 'randrianindrina.henintsoa.tahiriniaina@ad2m.local',
+            'telephone' => null,
+            'unite'     => 'Administration et Finances',
             'poste'     => 'ACCP',
-            'password'  => $pwd,
             'chef_hierarchique_id' => null,
         ], ['accp']);
 
-        // ✅ 2 missionnaires (chacun a son CH)
-        $this->upsertUser([
-            'matricule' => 'M-001',
-            'nom'       => 'Missionnaire',
-            'name'      => 'Missionnaire 1',
-            'email'     => 'm1@ad2m.com',
-            'telephone' => '0341000001',
-            'unite'     => 'Opérations',
-            'poste'     => 'Agent terrain',
-            'password'  => $pwd,
-            'chef_hierarchique_id' => $ch1->id,
-        ], ['missionnaire']);
+        // ✅ AUTRES MISSIONNAIRES
+        $chs = [$ch1->id, $ch2->id, $ch3->id];
+        $i = 0;
 
-        $this->upsertUser([
-            'matricule' => 'M-002',
-            'nom'       => 'Missionnaire',
-            'name'      => 'Missionnaire 2',
-            'email'     => 'm2@ad2m.com',
-            'telephone' => '0341000002',
-            'unite'     => 'Opérations',
-            'poste'     => 'Agent terrain',
-            'password'  => $pwd,
-            'chef_hierarchique_id' => $ch2->id,
-        ], ['missionnaire']);
+        $missionnaires = [
+            ['mat' => 'M-001', 'nom' => 'RAKOTOARISOA',    'name' => 'RAKOTOARISOA Doris',                        'poste' => 'CMVA', 'email' => 'rakotoarisoa.doris@ad2m.local'],
+            ['mat' => 'M-002', 'nom' => 'RAFANOMEZANTSOA', 'name' => 'RAFANOMEZANTSOA Erick Alain',              'poste' => 'SO',   'email' => 'rafanomezantsoa.erick.alain@ad2m.local'],
+            ['mat' => 'M-003', 'nom' => 'RESAMPA',         'name' => 'RESAMPA Olivia',                           'poste' => 'AADM', 'email' => 'resampa.olivia@ad2m.local'],
+            ['mat' => 'M-004', 'nom' => 'RALAMBOMANANA',   'name' => 'RALAMBOMANANA Herimampionona',            'poste' => 'TECHNICIEN', 'email' => 'ralambomanana.herimampionona@ad2m.local'],
+            ['mat' => 'M-005', 'nom' => 'RAKOTONIAINA',    'name' => 'RAKOTONIAINA Andrianjaka',                'poste' => 'IPIR', 'email' => 'rakotoniaina.andrianjaka@ad2m.local'],
+            ['mat' => 'M-006', 'nom' => 'RABEARIVONY',     'name' => 'RABEARIVONY Harimihaja Tantely Sébastien', 'poste' => 'AMVA', 'email' => 'rabearivony.harimihaja.tantely.sebastien@ad2m.local'],
+            ['mat' => 'M-007', 'nom' => 'ANDRIAMAHATASY',  'name' => 'ANDRIAMAHATASY Victor',                   'poste' => 'AF',   'email' => 'andriamahatasy.victor@ad2m.local'],
+            ['mat' => 'M-008', 'nom' => 'ANDRIANTSILAVO',  'name' => 'ANDRIANTSILAVO Manoamanana',              'poste' => 'CRP',  'email' => 'andriantsilavo.manoamanana@ad2m.local'],
+            ['mat' => 'M-009', 'nom' => 'RAZAFINDRATSIMA', 'name' => 'RAZAFINDRATSIMA Alain',                   'poste' => 'RSE',  'email' => 'razafindratsima.alain@ad2m.local'],
+            ['mat' => 'M-010', 'nom' => 'RAKOTONDRASOA',   'name' => 'RAKOTONDRASOA Lalaina',                   'poste' => 'Informaticien', 'email' => 'rakotondrasoa.lalaina@ad2m.local'],
+            ['mat' => 'M-011', 'nom' => 'RAKOTONDRANAIVO', 'name' => 'RAKOTONDRANAIVO Pierre Célestin',         'poste' => 'CSLT en Commercialisation', 'email' => 'rakotondranaivo.pierre.celestin@ad2m.local'],
+        ];
+
+        foreach ($missionnaires as $m) {
+            $this->upsertUser([
+                'matricule' => $m['mat'],
+                'nom'       => $m['nom'],
+                'name'      => $m['name'],
+                'email'     => $m['email'],
+                'telephone' => null,
+                'unite'     => 'UGP',
+                'poste'     => $m['poste'],
+                'chef_hierarchique_id' => $chs[$i % count($chs)],
+            ], ['missionnaire']);
+
+            $i++;
+        }
     }
 }
