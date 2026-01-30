@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import logo from '../assets/logo_ad2m.png'
 
 const route = useRoute()
 const router = useRouter()
@@ -57,11 +58,8 @@ const logout = async () => {
         <div class="h-16 flex items-center justify-between gap-4">
           <!-- Left brand -->
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-brand flex items-center justify-center">
-              <svg viewBox="0 0 24 24" class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 4c-6 0-12 4-12 12 0 2 0 4 2 6 8 0 12-6 12-12 0-2 0-4-2-6Z"/>
-                <path d="M8 14c2-2 5-4 10-4"/>
-              </svg>
+            <div class="w-10 h-10 rounded-xl overflow-hidden bg-white flex items-center justify-center">
+              <img :src="logo" alt="AD2M" class="w-full h-full object-contain" draggable="false" />
             </div>
             <div class="leading-tight">
               <div class="font-bold text-ink">AD2M</div>
