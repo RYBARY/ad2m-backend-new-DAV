@@ -258,7 +258,7 @@ const submitMission = async () => {
     await window.axios.post(`/api/missions/${id.value}/soumettre`)
     appliedMode.value = false
     await load()
-    notice.value = '✅ Mission soumise au CH.'
+    notice.value = '✅ Mission soumise.'
   } catch (e) {
     apiError.value = e?.response?.data?.message || 'Erreur soumission.'
   } finally {
@@ -394,19 +394,17 @@ const doDelete = async () => {
         <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
           <div class="px-6 py-4 border-b flex items-center justify-between gap-3">
             <div class="font-bold text-slate-900">Contenu mission</div>
-            <span class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700">
-              Contexte = “motif” (DB)
-            </span>
+
           </div>
 
           <div class="p-6 space-y-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Nom des missionnaires (visuel)</label>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Nom des missionnaires</label>
               <textarea v-model="form.missionnaires" rows="2" :disabled="isReadonly" :class="[controlBase, 'min-h-[74px]']" />
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Contexte / Motif (DB)</label>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Contexte / Motif</label>
               <textarea
                 v-model="form.motif"
                 rows="3"
@@ -417,11 +415,11 @@ const doDelete = async () => {
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Objets de mission (visuel)</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Objets de mission</label>
                 <textarea v-model="form.objets_mission" rows="3" :disabled="isReadonly" :class="[controlBase, 'min-h-[92px]']" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Résultats attendus (visuel)</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1">Résultats attendus</label>
                 <textarea v-model="form.resultats_attendus" rows="3" :disabled="isReadonly" :class="[controlBase, 'min-h-[92px]']" />
               </div>
             </div>
@@ -434,22 +432,22 @@ const doDelete = async () => {
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Distance & itinéraire (visuel)</label>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Distance & itinéraire</label>
               <textarea v-model="form.distance_itineraire" rows="3" :disabled="isReadonly" :class="[controlBase, 'min-h-[92px]']" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Décompte carburants (visuel)</label>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Décompte carburants</label>
               <textarea v-model="form.decompte_carburants" rows="3" :disabled="isReadonly" :class="[controlBase, 'min-h-[92px]']" />
             </div>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Date départ (DB)</label>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Date départ</label>
               <input v-model="form.date_debut" type="date" :disabled="isReadonly" :class="controlBase" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1">Date retour (DB)</label>
+              <label class="block text-sm font-medium text-slate-700 mb-1">Date retour</label>
               <input v-model="form.date_fin" type="date" :disabled="isReadonly" :class="controlBase" />
             </div>
             <div>
@@ -464,7 +462,7 @@ const doDelete = async () => {
         <!-- Annexe -->
         <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
           <div class="px-6 py-4 border-b flex items-center justify-between gap-3">
-            <div class="font-bold text-slate-900">Annexe : planning de mission (visuel)</div>
+            <div class="font-bold text-slate-900">Annexe : planning de mission</div>
             <button
               type="button"
               class="px-3 py-2 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:opacity-95 disabled:opacity-60"

@@ -91,7 +91,6 @@ onMounted(loadMissions);
               <tr v-for="mission in missions" :key="mission.id" class="hover:bg-indigo-50 transition">
                 <td class="px-6 py-4">
                   <div class="text-base font-semibold text-gray-900">{{ mission.objet }}</div>
-                  <div class="text-xs text-gray-400">ID: #{{ mission.id }}</div>
                 </td>
                 <td class="px-6 py-4 text-sm text-gray-700">{{ mission.destination }}</td>
                 <td class="px-6 py-4 text-center">

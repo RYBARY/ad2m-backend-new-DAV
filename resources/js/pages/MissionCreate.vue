@@ -124,7 +124,7 @@ const runAutosave = async () => {
     try {
       const res = await window.axios.post('/api/missions', payloadDB())
       mission.value = res.data?.mission ?? res.data
-      notice.value = '✅ Brouillon créé automatiquement.'
+      notice.value = ''
     } catch (e) {
       if (e?.response?.status === 422) {
         apiErrors.value = e.response.data?.errors ?? {}
@@ -220,7 +220,7 @@ const submitToCH = async () => {
     await window.axios.post(`/api/missions/${mission.value.id}/soumettre`)
     const res = await window.axios.get(`/api/missions/${mission.value.id}`)
     mission.value = res.data?.mission ?? res.data
-    notice.value = '✅ Mission soumise au CH. (Lecture seule)'
+    notice.value = '✅ Mission soumise.'
   } catch (e) {
     apiError.value = e?.response?.data?.message || 'Erreur soumission.'
   } finally {
@@ -277,11 +277,9 @@ const badgeClass = computed(() => {
           </span>
 
           <span v-if="created" class="text-xs text-slate-500">
-            ID: {{ mission.id }} • Auto-enregistrement activé
           </span>
 
           <span v-else class="text-xs text-slate-500">
-            Auto-enregistrement : démarre dès que Objet + Destination sont remplis
           </span>
         </div>
       </div>
@@ -319,7 +317,7 @@ const badgeClass = computed(() => {
                 readonly ? 'bg-slate-50 text-slate-700' : '',
                 fieldError('objet') ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-100' : ''
               ]"
-              placeholder="Ex : Supervision chantier – Moramanga"
+              placeholder="Supervision chantier – Moramanga"
             />
             <p v-if="fieldError('objet')" class="text-xs text-rose-700 mt-1">{{ fieldError('objet') }}</p>
           </div>
@@ -337,7 +335,7 @@ const badgeClass = computed(() => {
                 readonly ? 'bg-slate-50 text-slate-700' : '',
                 fieldError('destination') ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-100' : ''
               ]"
-              placeholder="Ex : Ambatondrazaka…"
+              placeholder="Ambatondrazaka…"
             />
             <p v-if="fieldError('destination')" class="text-xs text-rose-700 mt-1">{{ fieldError('destination') }}</p>
           </div>
@@ -353,7 +351,7 @@ const badgeClass = computed(() => {
               step="1"
               :readonly="readonly"
               :class="[control, readonly ? 'bg-slate-50 text-slate-700' : '']"
-              placeholder="Ex : 2500000"
+              placeholder="2500000"
             />
           </div>
 
@@ -364,7 +362,7 @@ const badgeClass = computed(() => {
               type="text"
               :readonly="readonly"
               :class="[control, readonly ? 'bg-slate-50 text-slate-700' : '']"
-              placeholder="Ex : 4x4, moto, avion…"
+              placeholder="4x4, moto, avion…"
             />
           </div>
         </div>
@@ -374,9 +372,7 @@ const badgeClass = computed(() => {
       <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
         <div class="px-6 py-4 border-b flex items-center justify-between gap-3">
           <div class="font-bold text-slate-900">Contenu mission</div>
-          <span class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700">
-            Contexte = “motif” (DB)
-          </span>
+
         </div>
 
         <div class="p-6 space-y-4">

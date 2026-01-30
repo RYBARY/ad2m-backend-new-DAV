@@ -220,7 +220,7 @@ const doValidate = async (m) => {
   try {
     await window.axios.post(`/api/missions/${m.id}/${endpoint}`)
     await load()
-    notice.value = '✅ Validée. (Elle reste dans Historique avec “Valider” désactivé)'
+    notice.value = '✅ Mission validée.'
   } catch (e) {
     apiError.value = e?.response?.data?.message || 'Action refusée.'
   } finally {
@@ -245,7 +245,7 @@ const doReject = async () => {
     rejectOpen.value = false
     rejectTarget.value = null
     await load()
-    notice.value = '✅ Rejetée → retour au missionnaire (et conservée dans Historique).'
+    notice.value = '✅ Rejetée.'
   } catch (e) {
     apiError.value = e?.response?.data?.message || 'Erreur rejet.'
   } finally {
@@ -259,7 +259,7 @@ const doReject = async () => {
     <div class="flex justify-between items-start gap-4">
       <div>
         <h1 class="text-3xl font-extrabold text-slate-900">Workflow validations</h1>
-        <p class="text-slate-600 mt-1">Voir mission = lecture seule. Valider / rejeter depuis ici.</p>
+        <p class="text-slate-600 mt-1">Validez ou rejetez les missions en attente.</p>
       </div>
 
       <button class="px-3 py-2 rounded-xl border bg-white hover:bg-slate-50" @click="load" :disabled="loading">
@@ -517,7 +517,7 @@ const doReject = async () => {
         <div class="w-full max-w-md bg-white rounded-2xl shadow-lg border p-6">
           <div class="text-lg font-bold text-slate-900">Rejeter la mission ?</div>
           <p class="text-slate-600 mt-2">
-            Elle retournera au <b>brouillon</b> chez le missionnaire et restera dans votre <b>Historique</b>.
+            Elle retournera au <b>brouillon</b>.
           </p>
 
           <div class="mt-5 flex justify-end gap-2">

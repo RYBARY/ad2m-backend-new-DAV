@@ -324,7 +324,7 @@ const cloturer = async () => {
         <textarea
           v-model="note"
           rows="3"
-          placeholder="Note (optionnel) : exemple 'PJ OK' / 'Manque facture hôtel'..."
+          placeholder="Note (optionnel)"
           class="w-full rounded-xl border border-slate-200 px-4 py-2 outline-none
                  focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
         ></textarea>

@@ -45,7 +45,7 @@ const handleLogin = async () => {
         v-model="email"
         type="email"
         autocomplete="username"
-        placeholder="votre@email.com"
+        placeholder="Email"
         class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none transition
                focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
       />
@@ -57,7 +57,7 @@ const handleLogin = async () => {
         v-model="password"
         type="password"
         autocomplete="current-password"
-        placeholder="••••••••"
+        placeholder="Mot de passe"
         class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 shadow-sm outline-none transition
                focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
       />
